@@ -18,22 +18,22 @@ void init_pos(double* restrict rxyz, const double rho)
         for (int j = 0; j < nucells; j++) {
             for (int k = 0; k < nucells; k++) {
                 rxyz[idx + 0] = i * a; // x
-                rxyz[idx + 1] = j * a; // y
-                rxyz[idx + 2] = k * a; // z
-                                       // del mismo átomo
-                rxyz[idx + 3] = (i + 0.5) * a;
-                rxyz[idx + 4] = (j + 0.5) * a;
-                rxyz[idx + 5] = k * a;
+                rxyz[N + idx + 0] = j * a; // y
+                rxyz[2 * N + idx + 0] = k * a; // z
+                                               // del mismo átomo
+                rxyz[idx + 1] = (i + 0.5) * a;
+                rxyz[N + idx + 1] = (j + 0.5) * a;
+                rxyz[2 * N + idx + 1] = k * a;
 
-                rxyz[idx + 6] = (i + 0.5) * a;
-                rxyz[idx + 7] = j * a;
-                rxyz[idx + 8] = (k + 0.5) * a;
+                rxyz[idx + 2] = (i + 0.5) * a;
+                rxyz[N + idx + 2] = j * a;
+                rxyz[2 * N + idx + 2] = (k + 0.5) * a;
 
-                rxyz[idx + 9] = i * a;
-                rxyz[idx + 10] = (j + 0.5) * a;
-                rxyz[idx + 11] = (k + 0.5) * a;
+                rxyz[idx + 3] = i * a;
+                rxyz[N + idx + 3] = (j + 0.5) * a;
+                rxyz[2 * N + idx + 3] = (k + 0.5) * a;
 
-                idx += 12;
+                idx += 4;
             }
         }
     }
@@ -47,11 +47,11 @@ void init_vel(double* restrict vxyz, double* restrict temp, double* restrict eki
     double sf, sumv2 = 0.0;
     double sumv[3] = { 0.0, 0.0, 0.0 };
 
-    for (int i = 0; i < 3 * N; i += 3) {
+    for (int i = 0; i < N; i++) {
         for (int j = 0; j < 3; j++) {
-            vxyz[i + j] = rand() / (double)RAND_MAX - 0.5;
-            sumv[j] += vxyz[i + j];
-            sumv2 += vxyz[i + j] * vxyz[i + j];
+            vxyz[j * N + i] = rand() / (double)RAND_MAX - 0.5;
+            sumv[j] += vxyz[j * N + i];
+            sumv2 += vxyz[j * N + i] * vxyz[j * N + i];
         }
     }
 
@@ -62,9 +62,9 @@ void init_vel(double* restrict vxyz, double* restrict temp, double* restrict eki
     *ekin = 0.5 * sumv2;
     sf = sqrt(T0 / *temp);
 
-    for (int i = 0; i < 3 * N; i += 3) { // elimina la velocidad del centro de masa
+    for (int i = 0; i < N; i++) { // elimina la velocidad del centro de masa
         for (int j = 0; j < 3; j++) { // y ajusta la temperatura
-            vxyz[i + j] = sf * (vxyz[i + j] - sumv[j]);
+            vxyz[j * N + i] = sf * (vxyz[j * N + i] - sumv[j]);
         }
     }
 }
@@ -94,15 +94,15 @@ void forces(const double* restrict rxyz, double* restrict fxyz, double* restrict
     double _epot = 0.0;
     double pres_vir = 0.0;
 
-    for (int i = 0; i < 3 * (N - 1); i += 3) {
+    for (int i = 0; i < N - 1; i++) {
 
         for (int k = 0; k < 3; k++)
-            ri[k] = rxyz[i + k];
+            ri[k] = rxyz[k * N + i];
 
-        for (int j = i + 3; j < 3 * N; j += 3) {
+        for (int j = i + 1; j < N; j++) {
 
             for (int k = 0; k < 3; k++)
-                rj[k] = rxyz[j + k];
+                rj[k] = rxyz[k * N + j];
 
             // distancia mínima entre r_i y r_j
             for (int k = 0; k < 3; k++)
@@ -122,8 +122,8 @@ void forces(const double* restrict rxyz, double* restrict fxyz, double* restrict
                 double fr = 24.0 * r2inv * r6inv * (2.0 * r6inv - 1.0);
 
                 for (int k = 0; k < 3; k++) {
-                    fxyz[i + k] += rij[k] * fr;
-                    fxyz[j + k] -= rij[k] * fr;
+                    fxyz[k * N + i] += fr * rij[k];
+                    fxyz[k * N + j] -= fr * rij[k];
                 }
 
                 _epot += 4.0 * r6inv * (r6inv - 1.0) - ECUT;
