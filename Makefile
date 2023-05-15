@@ -1,5 +1,5 @@
 CC      = gcc-12 $(USER_DEFINES)
-CFLAGS	= -O3 -march=native -ftree-vectorize -fopt-info-vec-optimized -fopt-info-vec-missed
+CFLAGS	= -O3 -march=native -ftree-vectorize -fopt-info-vec-optimized -fopt-info-vec-missed -fsingle-precision-constant
 WFLAGS	= -std=c11 -Wall -Wextra -g
 LDFLAGS	= -lm
 

@@ -9,18 +9,18 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-double rxyz[3 * N], vxyz[3 * N], fxyz[3 * N];
+float rxyz[3 * N], vxyz[3 * N], fxyz[3 * N];
 
 int main()
 {
-    int m = cbrt(N / 4.0);
+    int m = cbrtf(N / 4.0);
     assert(m * m * m * 4 == N);
 
     // FILE *file_xyz, *file_thermo;
     // file_xyz = fopen("trajectory.xyz", "w");
     // file_thermo = fopen("thermo.log", "w");
-    double Ekin, Epot, Temp, Pres; // variables macroscopicas
-    double Rho, cell_V, cell_L, tail, Etail, Ptail;
+    float Ekin, Epot, Temp, Pres; // variables macroscopicas
+    float Rho, cell_V, cell_L, tail, Etail, Ptail;
 
     printf("# Número de partículas:      %d\n", N);
     printf("# Temperatura de referencia: %.2f\n", T0);
@@ -31,22 +31,22 @@ int main()
     // fprintf(file_thermo, "# t Temp Pres Epot Etot\n");
 
     srand(SEED);
-    double t = 0.0, sf;
-    double Rhob;
+    float t = 0.0, sf;
+    float Rhob;
     Rho = RHOI;
     init_pos(rxyz, Rho);
-    double start = wtime();
+    float start = wtime();
     for (int m = 0; m < 9; m++) {
         Rhob = Rho;
-        Rho = RHOI - 0.1 * (double)m;
-        cell_V = (double)N / Rho;
-        cell_L = cbrt(cell_V);
+        Rho = RHOI - 0.1 * (float)m;
+        cell_V = (float)N / Rho;
+        cell_L = cbrtf(cell_V);
         tail = 16.0 * M_PI * Rho * ((2.0 / 3.0) * pow(RCUT, -9) - pow(RCUT, -3)) / 3.0;
-        Etail = tail * (double)N;
+        Etail = tail * (float)N;
         Ptail = tail * Rho;
 
         int i = 0;
-        sf = cbrt(Rhob / Rho);
+        sf = cbrtf(Rhob / Rho);
         for (int k = 0; k < 3 * N; k++) { // reescaleo posiciones a nueva densidad
             rxyz[k] *= sf;
         }
@@ -57,19 +57,19 @@ int main()
 
             velocity_verlet(rxyz, vxyz, fxyz, &Epot, &Ekin, &Pres, &Temp, Rho, cell_V, cell_L);
 
-            sf = sqrt(T0 / Temp);
+            sf = sqrtf(T0 / Temp);
             for (int k = 0; k < 3 * N; k++) { // reescaleo de velocidades
                 vxyz[k] *= sf;
             }
         }
 
         int mes = 0;
-        double epotm = 0.0, presm = 0.0;
+        float epotm = 0.0, presm = 0.0;
         for (i = TEQ; i < TRUN; i++) { // loop de medicion
 
             velocity_verlet(rxyz, vxyz, fxyz, &Epot, &Ekin, &Pres, &Temp, Rho, cell_V, cell_L);
 
-            sf = sqrt(T0 / Temp);
+            sf = sqrtf(T0 / Temp);
             for (int k = 0; k < 3 * N; k++) { // reescaleo de velocidades
                 vxyz[k] *= sf;
             }
@@ -91,10 +91,10 @@ int main()
 
             t += DT;
         }
-        printf("%f\t%f\t%f\t%f\n", Rho, cell_V, epotm / (double)mes, presm / (double)mes);
+        printf("%f\t%f\t%f\t%f\n", Rho, cell_V, epotm / (float)mes, presm / (float)mes);
     }
 
-    double elapsed = wtime() - start;
+    float elapsed = wtime() - start;
     printf("# Tiempo total de simulación = %f segundos\n", elapsed);
     printf("# Tiempo simulado = %f [fs]\n", t * 1.6);
     printf("# ns/day = %f\n", (1.6e-6 * t) / elapsed * 86400);
